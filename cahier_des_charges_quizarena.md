@@ -2,7 +2,7 @@
 
 **Projet :** application mobile de quiz de classe  
 **Cours :** Advanced Mobile Development — Flutter, BLoC, Node.js, Express et MongoDB  
-**Groupe :** 5 membres — noms à compléter  
+**Groupe :** 4 membres — noms à compléter  
 **Version :** 1.1 — plan d’exécution accéléré jusqu’au dimanche 29 novembre 2026
 
 > Ce cahier traduit les consignes du *Project Book*, notamment la fiche T17 et les exigences techniques et livrables. Il sert de base au document de conception M1; les décisions de détail (champs, écrans, règles de durée) devront être validées par le groupe et consignées dans `docs/design.pdf`.
@@ -114,17 +114,16 @@ Les chemins exacts sont à confirmer dans la table d’API de `docs/design.pdf` 
 
 Chaque endpoint du document de conception et du README précise méthode, chemin, rôle, code succès, erreurs majeures et règles d’autorisation. Fournir `requests.http`, collection Postman/Bruno ou OpenAPI.
 
-## 4. Répartition des responsabilités (5 membres)
+## 4. Répartition des responsabilités (4 membres)
 
-Remplacer « Membre 1–5 » par les noms et identifiants. Les responsables principaux coordonnent leur domaine, mais la revue croisée et les tâches d’app/API garantissent que chacun code dans les deux parties. Le lead participe aussi au code.
+Remplacer « Membre 1–4 » par les noms et identifiants. Les responsables principaux coordonnent leur domaine, mais la revue croisée et les tâches d’app/API garantissent que chacun code dans les deux parties. Le lead participe aussi au code. Les tâches transversales (rapport, UX, release) sont partagées; chaque membre rédige sa contribution individuelle au rapport.
 
 | Membre / rôle principal | Responsabilité de réalisation | Contribution API | Contribution Flutter | Preuve individuelle attendue |
 |---|---|---|---|---|
-| **Membre 1 — Lead / intégration** | Planning, tableau d’issues, intégration, cohérence des contrats, suivi des jalons | Authentification : routes/services register-login-refresh-logout, validation des variables de configuration ou tests du flux | Feature `auth` : écrans/états BLoC, repository et cas d’usage de connexion; garde de navigation avec le membre 3 | PR auth API + PR auth app; diagramme d’intégration; présentation du flux de jetons |
-| **Membre 2 — Référent API / sécurité** | Modèle MongoDB, sécurité, autorisation et documentation d’API | Cours et adhésions : modèles, services, endpoints, code de jonction, rôles et tests d’accès | Feature `courses` : domaine, data source/repository, BLoC et écrans liste/détail/join | PR cours API + PR courses app; tests d’autorisation; explication des index et règles d’accès |
-| **Membre 3 — Référent app / architecture** | Structure feature-first, composition root/DI, navigation et revues app | Quiz et questions : schémas, endpoints enseignant et DTO étudiant sans correction, tests de fuite de réponses | Feature `quizzes` : création/édition côté enseignant et affichage/passation côté étudiant; BLoC, états et formulaires | PR quiz/questions API + PR quizzes app; diagramme d’une feature; démonstration de DI et séparation de couches |
-| **Membre 4 — Qualité / tests / CI** | Pipeline CI, stratégie de tests, analyse statique, builds et contrôle de release | Tentatives : démarrage/soumission, correction serveur, timer, unicité et tests d’intégration associés | Feature `attempts` : BLoC de passation/résultat, timer d’interface non autoritaire, tests `bloc_test`, cache/offline principal ou support de test | PR attempts API + PR attempts app; CI verte; cas de test qui échoue si une règle serveur casse |
-| **Membre 5 — Produit / UX / release** | Parcours utilisateur, wireframes, accessibilité, rapport, slides, répétition de démo | Résultats/classement : endpoints paginés, agrégation/tri, tests d’autorisation; script de seed des comptes et données | Feature `leaderboard` et résultats : BLoC, repository, états complets; mise à jour optimiste avec rollback sur une action appropriée | PR classement API + PR leaderboard app; captures; contribution personnelle rapport; démo des deux rôles |
+| **Membre 1 — Lead / intégration** | Planning, tableau d’issues, intégration, cohérence des contrats, suivi des jalons; coordonne README et slides | Authentification : routes/services register-login-refresh-logout, validation de configuration et tests du flux | Feature `auth` : écrans/états BLoC, repository et cas d’usage; garde de navigation avec le membre 3 | PR auth API + PR auth app; diagramme d’intégration; présentation du flux de jetons |
+| **Membre 2 — Référent API / sécurité** | Modèle MongoDB, sécurité, autorisation, documentation API et revue des règles métier | Cours et adhésions : modèles, services, endpoints, code de jonction, rôles et tests d’accès | Feature `courses` : domaine, data source/repository, BLoC et écrans liste/détail/join | PR cours API + PR courses app; tests d’autorisation; explication des index et règles d’accès |
+| **Membre 3 — Référent app / architecture** | Structure feature-first, composition root/DI, navigation, wireframes et revues app | Quiz et questions : schémas, endpoints enseignant et DTO étudiant sans correction, tests de fuite de réponses | Feature `quizzes` : création/édition côté enseignant et affichage côté étudiant; BLoC, états et formulaires | PR quiz/questions API + PR quizzes app; diagramme d’une feature; démonstration de DI et séparation de couches |
+| **Membre 4 — Qualité / tests / release** | Pipeline CI, stratégie de tests, analyse statique, builds, seed de démo et contrôle de release; pilote rapport technique et répétition | Tentatives, résultats et classement : soumission, correction serveur, timer, unicité, endpoints paginés et tests d’intégration | Features `attempts` et `leaderboard` : passation/résultat/classement, tests `bloc_test`, timer d’interface non autoritaire, cache principal | PR API + PR app; CI verte; tests des règles serveur; APK installé et démontré |
 
 ### Travail partagé obligatoire
 
@@ -133,7 +132,7 @@ Remplacer « Membre 1–5 » par les noms et identifiants. Les responsables prin
 - Tous les membres relisent les règles métier de T17 et participent au moins à une revue API et une revue Flutter.
 - L’optimistic update doit porter sur une action réellement réversible (par exemple adhésion ou favori si ajouté), avec rollback en cas d’échec. Ne jamais afficher comme définitive une note calculée localement.
 - Transformer possible : debounce pour recherche de cours/quiz, `droppable` pour pagination/soumission afin d’éviter les doublons. Le choix et la justification sont documentés.
-- La fiche recommande le **quiz live en temps réel**. Compte tenu de la semaine disponible, le groupe décide dès le premier jour si un WebSocket end-to-end est réalisable. Si oui, le membre 4 pilote le protocole/API et le membre 3 l’état Flutter; les autres couvrent intégration, autorisations et essais. Sinon, choisir dès M1 une option avancée de moindre portée et démontrable, par exemple recherche avancée avec debounce et filtres; vérifier que le professeur accepte ce choix si la carte T17 recommande spécifiquement le live. Ne pas entamer plusieurs options avancées.
+- La fiche recommande le **quiz live en temps réel**. Compte tenu de la semaine disponible, le groupe décide dès le premier jour si un WebSocket end-to-end est réalisable. Si oui, le membre 4 pilote le protocole/API, le membre 3 l’état Flutter, le membre 2 les autorisations et le membre 1 l’intégration. Sinon, choisir dès le premier jour une option avancée de moindre portée et démontrable, par exemple recherche avancée avec debounce et filtres; vérifier que l’enseignant accepte ce choix si la carte T17 recommande spécifiquement le live. Ne pas entamer plusieurs options avancées.
 
 ## 5. Fonctionnalité avancée : choix adapté au délai
 
@@ -246,7 +245,7 @@ Préparer aussi un plan de secours reproductible avec données seedées et vidé
 5. Comportement d’une tentative interrompue, répétée ou envoyée deux fois.
 6. Mécanisme live retenu (WebSocket/SSE), événements et stratégie de reconnexion.
 7. Fournisseur de déploiement, URL, jeu de données de démonstration et coût/limites.
-8. Attribution des noms/IDs aux cinq responsabilités et calendrier des revues.
+8. Attribution des noms/IDs aux quatre responsabilités et calendrier des revues.
 
 ## Référence
 
