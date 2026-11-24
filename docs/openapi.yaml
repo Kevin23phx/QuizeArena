@@ -1,7 +1,8 @@
 # STATUT DU CONTRAT
-# IMPLEMENTE DANS L'API : Health (/health, /ready) et Authentication
-# (/auth/register, /auth/login, /auth/refresh, /auth/logout).
-# VALIDE PAR LE GROUPE, IMPLEMENTATION A SUIVRE : Courses.
+# IMPLEMENTE DANS L'API : Health (/health, /ready), Authentication
+# (/auth/register, /auth/login, /auth/refresh, /auth/logout) et Courses
+# (création, liste, jonction, détail). Quiz: brouillon, questions, publication,
+# liste/détail, tentatives et correction serveur sont implémentés.
 openapi: 3.1.0
 info:
   title: QuizArena API
@@ -380,7 +381,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  # CONTRAT COURSES VALIDE PAR LE GROUPE; routes pas encore implémentées.
+  # Contrat Courses validé par le groupe et implémenté (création, liste, jonction, détail).
   # Le serveur génère le code; seul le professeur propriétaire le voit.
   /api/v1/courses:
     post:
@@ -617,6 +618,495 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/courses/{courseId}/quizzes:
+    parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[0-9a-fA-F]{24}$'
+    post:
+      summary: Créer un brouillon de quiz
+      description: >-
+        Réservé à l'enseignant propriétaire du cours. Le serveur fixe le temps
+        à 10 secondes par question; ce paramètre n'est pas fourni par le client.
+      operationId: createQuiz
+      tags: [Quizzes]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuizRequest'
+      responses:
+        '201':
+          description: Brouillon créé.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rôle enseignant requis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cours inexistant ou non détenu par cet enseignant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Identifiant ou corps invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Lister les quiz d'un cours accessible
+      description: >-
+        L'enseignant propriétaire voit tous les statuts. L'étudiant membre ne
+        voit que les quiz publiés.
+      operationId: listCourseQuizzes
+      tags: [Quizzes]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste des quiz accessibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cours inexistant ou inaccessible.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/quizzes/{quizId}/questions:
+    parameters:
+      - name: quizId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[0-9a-fA-F]{24}$'
+    post:
+      summary: Ajouter une question à un brouillon
+      description: Réservé à l'enseignant propriétaire; choix unique parmi 2 à 6 options.
+      operationId: addQuizQuestion
+      tags: [Quizzes]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestionRequest'
+      responses:
+        '201':
+          description: Question créée.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeacherQuestion'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rôle enseignant requis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Quiz inexistant ou non détenu par cet enseignant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Le quiz n'est plus modifiable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Corps invalide ou index de réponse hors limites.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/quizzes/{quizId}/publish:
+    post:
+      summary: Publier un quiz
+      description: L'enseignant propriétaire peut publier un quiz qui contient au moins une question.
+      operationId: publishQuiz
+      tags: [Quizzes]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '200':
+          description: Quiz publié.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rôle enseignant requis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Quiz inexistant ou non détenu par cet enseignant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Le quiz ne contient aucune question.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/quizzes/{quizId}:
+    get:
+      summary: Lire un quiz accessible
+      description: Le détail des réponses correctes est inclus uniquement pour l'enseignant propriétaire.
+      operationId: getQuiz
+      tags: [Quizzes]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '200':
+          description: Quiz et questions accessibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuizDetail'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Quiz inexistant ou inaccessible.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/quizzes/{quizId}/attempts:
+    post:
+      summary: Démarrer ou reprendre l'unique tentative
+      description: >-
+        Réservé à un étudiant membre. Le serveur fixe 10 secondes par question;
+        répéter l'appel renvoie la tentative existante.
+      operationId: startAttempt
+      tags: [Attempts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '201':
+          description: Tentative créée.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResponse'
+        '200':
+          description: Tentative existante renvoyée, sans en créer une nouvelle.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Cette opération est réservée aux étudiants.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Quiz inexistant, non publié ou étudiant non membre.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Le quiz ne contient aucune question.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/attempts/{attemptId}:
+    get:
+      summary: Lire l'état de sa tentative
+      description: Renvoie la question courante sans la réponse correcte, ou le résultat après la fin.
+      operationId: getAttempt
+      tags: [Attempts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      responses:
+        '200':
+          description: État de la tentative et question courante ou résultat final.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tentative inexistante ou appartenant à un autre étudiant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/attempts/{attemptId}/answers:
+    post:
+      summary: Soumettre la réponse à la question courante
+      description: Le serveur valide l'échéance et calcule la note; une réponse tardive n'est pas acceptée.
+      operationId: submitAttemptAnswer
+      tags: [Attempts]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitAnswerRequest'
+      responses:
+        '200':
+          description: Réponse traitée; renvoie la question suivante ou le résultat final.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tentative inexistante ou appartenant à un autre étudiant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Question expirée, non courante ou tentative déjà terminée.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Réponse invalide ou option inexistante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/quizzes/{quizId}/results:
+    get:
+      summary: Lire les résultats détaillés d'un quiz
+      description: Réservé à l'enseignant propriétaire; inclut les réponses par étudiant et par question.
+      operationId: getQuizResults
+      tags: [Results]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        '200':
+          description: Résultats des tentatives terminées.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuizResultsResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Rôle enseignant requis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Quiz inexistant ou non détenu par l'enseignant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Identifiant ou pagination invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/quizzes/{quizId}/leaderboard:
+    get:
+      summary: Lire le classement d'un quiz
+      description: Accessible à l'enseignant propriétaire et aux étudiants membres; seules les tentatives terminées sont classées.
+      operationId: getQuizLeaderboard
+      tags: [Results]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+      responses:
+        '200':
+          description: Classement paginé par score décroissant puis date de soumission croissante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Quiz inexistant ou utilisateur non membre.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Identifiant ou pagination invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     BearerAuth:
@@ -650,6 +1140,219 @@ components:
           minLength: 1
           maxLength: 32
           description: Code de jonction généré par le serveur; longueur maximale 32 caractères.
+    CreateQuizRequest:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+    CreateQuestionRequest:
+      type: object
+      additionalProperties: false
+      required: [prompt, options, correctOptionIndex]
+      properties:
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 500
+        options:
+          type: array
+          minItems: 2
+          maxItems: 6
+          items:
+            type: string
+            minLength: 1
+            maxLength: 150
+        correctOptionIndex:
+          type: integer
+          minimum: 0
+          description: Index de l'unique bonne option; jamais exposé aux étudiants.
+        points:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+        position:
+          type: integer
+          minimum: 0
+          description: Position facultative; par défaut, la question est ajoutée en fin de liste.
+    Quiz:
+      type: object
+      required: [id, courseId, teacherId, title, description, timePerQuestionSeconds, status, createdAt]
+      properties:
+        id: { type: string }
+        courseId: { type: string }
+        teacherId: { type: string }
+        title: { type: string }
+        description: { type: string }
+        timePerQuestionSeconds:
+          type: integer
+          const: 10
+          description: Durée fixée par l'API pour chaque question.
+        status: { type: string, enum: [draft, published, closed] }
+        createdAt: { type: string, format: date-time }
+    QuestionBase:
+      type: object
+      required: [id, prompt, options, points, position]
+      properties:
+        id: { type: string }
+        prompt: { type: string }
+        options:
+          type: array
+          items: { type: string }
+        points: { type: integer }
+        position: { type: integer }
+    TeacherQuestion:
+      allOf:
+        - $ref: '#/components/schemas/QuestionBase'
+        - type: object
+          required: [correctOptionIndex]
+          properties:
+            correctOptionIndex: { type: integer, minimum: 0 }
+    StudentQuestion:
+      allOf:
+        - $ref: '#/components/schemas/QuestionBase'
+        - not:
+            required: [correctOptionIndex]
+    QuizDetail:
+      allOf:
+        - $ref: '#/components/schemas/Quiz'
+        - type: object
+          required: [questions]
+          properties:
+            questions:
+              type: array
+              items:
+                oneOf:
+                  - $ref: '#/components/schemas/TeacherQuestion'
+                  - $ref: '#/components/schemas/StudentQuestion'
+    SubmitAnswerRequest:
+      type: object
+      additionalProperties: false
+      required: [questionId, selectedOptionIndex]
+      properties:
+        questionId:
+          type: string
+          pattern: '^[0-9a-fA-F]{24}$'
+        selectedOptionIndex:
+          type: integer
+          minimum: 0
+    AttemptResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, quizId, status, startedAt, score, totalPoints]
+          properties:
+            id: { type: string }
+            quizId: { type: string }
+            status: { type: string, enum: [in_progress, completed] }
+            startedAt: { type: string, format: date-time }
+            score: { type: integer, minimum: 0 }
+            totalPoints: { type: integer, minimum: 0 }
+            timePerQuestionSeconds:
+              type: integer
+              const: 10
+            deadlineAt:
+              type: string
+              format: date-time
+            serverTime:
+              type: string
+              format: date-time
+            currentQuestion:
+              type: object
+              required: [id, prompt, options, points, position, totalQuestions]
+              properties:
+                id: { type: string }
+                prompt: { type: string }
+                options:
+                  type: array
+                  items: { type: string }
+                points: { type: integer }
+                position: { type: integer }
+                totalQuestions: { type: integer }
+            submittedAt:
+              type: string
+              format: date-time
+            answers:
+              type: array
+              items:
+                type: object
+                required: [questionId, isCorrect, pointsEarned, answeredAt]
+                properties:
+                  questionId: { type: string }
+                  selectedOptionIndex:
+                    type: [integer, 'null']
+                  isCorrect: { type: boolean }
+                  pointsEarned: { type: integer }
+                  answeredAt: { type: string, format: date-time }
+    PaginationMeta:
+      type: object
+      required: [page, limit, total]
+      properties:
+        page: { type: integer, minimum: 1 }
+        limit: { type: integer, minimum: 1, maximum: 50 }
+        total: { type: integer, minimum: 0 }
+    QuizResultsResponse:
+      type: object
+      required: [data, meta, quizId]
+      properties:
+        quizId: { type: string }
+        data:
+          type: array
+          items:
+            type: object
+            required: [attemptId, studentId, studentName, score, totalPoints, startedAt, answers]
+            properties:
+              attemptId: { type: string }
+              studentId: { type: string }
+              studentName: { type: string }
+              score: { type: integer }
+              totalPoints: { type: integer }
+              startedAt: { type: string, format: date-time }
+              submittedAt: { type: string, format: date-time }
+              answers:
+                type: array
+                items:
+                  type: object
+                  required: [questionId, prompt, options, isCorrect, pointsEarned, maxPoints]
+                  properties:
+                    questionId: { type: string }
+                    prompt: { type: string }
+                    options:
+                      type: array
+                      items: { type: string }
+                    selectedOptionIndex: { type: [integer, 'null'] }
+                    isCorrect: { type: boolean }
+                    pointsEarned: { type: integer }
+                    maxPoints: { type: integer }
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    LeaderboardResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required: [rank, studentId, studentName, score, totalPoints]
+            properties:
+              rank: { type: integer, minimum: 1 }
+              studentId: { type: string }
+              studentName: { type: string }
+              score: { type: integer, minimum: 0 }
+              totalPoints: { type: integer, minimum: 0 }
+              submittedAt: { type: string, format: date-time }
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
     CourseBase:
       type: object
       required:
