@@ -1,0 +1,790 @@
+# STATUT DU CONTRAT
+# IMPLEMENTE DANS L'API : Health (/health, /ready) et Authentication
+# (/auth/register, /auth/login, /auth/refresh, /auth/logout).
+# VALIDE PAR LE GROUPE, IMPLEMENTATION A SUIVRE : Courses.
+openapi: 3.1.0
+info:
+  title: QuizArena API
+  version: 0.1.0
+  description: Contrat HTTP de l'API mobile QuizArena.
+servers:
+  - url: http://localhost:3000
+    description: Serveur local de développement
+paths:
+  /api/v1/health:
+    get:
+      summary: Vérifier que le processus API répond
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: L'API répond.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    const: ok
+
+  /api/v1/ready:
+    get:
+      summary: Vérifier que l'API et MongoDB sont prêts
+      operationId: getReadiness
+      tags:
+        - Health
+      responses:
+        '200':
+          description: L'API et MongoDB sont prêts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - database
+                properties:
+                  status:
+                    type: string
+                    const: ready
+                  database:
+                    type: string
+                    const: connected
+        '503':
+          description: MongoDB n'est pas connecté; l'API n'est pas prête.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - database
+                properties:
+                  status:
+                    type: string
+                    const: not_ready
+                  database:
+                    type: string
+                    const: disconnected
+
+  /api/v1/auth/register:
+    post:
+      summary: Créer un compte étudiant
+      description: >-
+        L'inscription publique crée toujours un compte étudiant. Les propriétés
+        inconnues, notamment role, sont refusées avec une erreur 422.
+      operationId: registerStudent
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: Nom de l'étudiant, limité à 50 caractères selon la décision du groupe.
+                email:
+                  type: string
+                  format: email
+                  description: L'API normalise l'adresse en minuscules avant stockage.
+                password:
+                  type: string
+                  format: password
+                  minLength: 1
+                  maxLength: 20
+                  description: Mot de passe non vide, limité à 20 caractères selon la décision du groupe.
+            example:
+              name: Awa Traoré
+              email: awa@example.com
+              password: "StrongPass123"
+      responses:
+        '201':
+          description: Le compte étudiant a été créé.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                      - name
+                      - email
+                      - role
+                      - createdAt
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      role:
+                        type: string
+                        const: student
+                      createdAt:
+                        type: string
+                        format: date-time
+        '409':
+          description: Un compte utilise déjà cette adresse email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Le corps est invalide ou contient un champ inconnu, comme role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Trop de tentatives d'inscription depuis cette adresse IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/login:
+    post:
+      summary: Connecter un utilisateur
+      description: >-
+        Vérifie les identifiants et renvoie les jetons de la session ainsi que
+        les informations publiques du compte. Un identifiant ou un mot de passe
+        incorrect renvoie la même erreur 401.
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: L'API normalise l'adresse en minuscules avant la recherche.
+                password:
+                  type: string
+                  format: password
+                  minLength: 1
+                  maxLength: 20
+            example:
+              email: awa@example.com
+              password: "StrongPass123"
+      responses:
+        '200':
+          description: Identifiants acceptés; une session a été ouverte.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - accessToken
+                      - refreshToken
+                      - tokenType
+                      - accessTokenExpiresInSeconds
+                      - user
+                    properties:
+                      accessToken:
+                        type: string
+                        description: Jeton d'accès de courte durée.
+                      refreshToken:
+                        type: string
+                        description: Jeton de renouvellement; sa rotation et sa révocation sont gérées par l'API.
+                      tokenType:
+                        type: string
+                        const: Bearer
+                      accessTokenExpiresInSeconds:
+                        type: integer
+                        minimum: 1
+                        description: Durée de validité de l'access token, en secondes.
+                      user:
+                        $ref: '#/components/schemas/PublicUser'
+        '401':
+          description: Adresse email ou mot de passe invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Le corps de la requête est invalide ou contient un champ inconnu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Trop de tentatives de connexion depuis cette adresse IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Renouveler les jetons d'une session
+      description: >-
+        Accepte un refresh token valide, le révoque et renvoie une nouvelle
+        paire de jetons. Un refresh token déjà utilisé est refusé et entraîne
+        la révocation de la session concernée.
+      operationId: refreshSession
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  minLength: 1
+            example:
+              refreshToken: opaque-refresh-token-value
+      responses:
+        '200':
+          description: Le refresh token a été renouvelé; l'ancien ne peut plus être réutilisé.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - accessToken
+                      - refreshToken
+                      - tokenType
+                      - accessTokenExpiresInSeconds
+                    properties:
+                      accessToken:
+                        type: string
+                        description: Nouveau jeton d'accès de courte durée.
+                      refreshToken:
+                        type: string
+                        description: Nouveau refresh token; l'ancien est révoqué.
+                      tokenType:
+                        type: string
+                        const: Bearer
+                      accessTokenExpiresInSeconds:
+                        type: integer
+                        minimum: 1
+        '401':
+          description: Refresh token invalide, expiré, révoqué ou déjà utilisé.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Le corps de la requête est invalide ou contient un champ inconnu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Trop de tentatives de renouvellement depuis cette adresse IP.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+  /api/v1/auth/logout:
+    post:
+      summary: Fermer une session
+      description: >-
+        Révoque la session liée au refresh token. La déconnexion est idempotente :
+        renvoie 204 même si le token est déjà révoqué ou inconnu.
+      operationId: logout
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  minLength: 1
+            example:
+              refreshToken: opaque-refresh-token-value
+      responses:
+        '204':
+          description: La session est fermée ou était déjà fermée; aucun corps n'est renvoyé.
+        '422':
+          description: Le corps de la requête est invalide ou contient un champ inconnu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # CONTRAT COURSES VALIDE PAR LE GROUPE; routes pas encore implémentées.
+  # Le serveur génère le code; seul le professeur propriétaire le voit.
+  /api/v1/courses:
+    post:
+      summary: Créer un cours
+      description: >-
+        Réservé à un enseignant. Le teacherId vient du compte authentifié et le
+        joinCode est généré par le serveur; le client ne peut pas imposer le rôle,
+        le propriétaire ni le code.
+      operationId: createCourse
+      tags:
+        - Courses
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourseRequest'
+            example:
+              name: Algorithmique avancée
+              description: Quiz du cours d'algorithmique.
+      responses:
+        '201':
+          description: Le cours a été créé; le code de jonction est renvoyé à l'enseignant propriétaire.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeacherCourse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Le compte authentifié n'a pas le rôle enseignant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Le corps de la requête est invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+    get:
+      summary: Lister les cours accessibles
+      description: >-
+        Un enseignant ne reçoit que ses cours; un étudiant ne reçoit que les
+        cours dont il est membre. La forme de chaque élément dépend du rôle:
+        seul l'enseignant propriétaire reçoit joinCode.
+      operationId: listCourses
+      tags:
+        - Courses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Numéro de page, à partir de 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Nombre d'éléments; le serveur plafonne cette valeur à 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: q
+          in: query
+          description: Recherche proposée dans le nom du cours.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      responses:
+        '200':
+          description: Liste paginée des cours accessibles au compte authentifié.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseListResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/courses/join:
+    post:
+      summary: Rejoindre un cours avec un code
+      description: >-
+        Réservé à un étudiant. Le serveur cherche le cours à partir du joinCode
+        et crée l'adhésion pour l'utilisateur authentifié. Une adhésion existante
+        est renvoyée de manière idempotente.
+      operationId: joinCourse
+      tags:
+        - Courses
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinCourseRequest'
+            example:
+              joinCode: A7K9P2QX
+      responses:
+        '201':
+          description: Une nouvelle adhésion au cours a été créée.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CourseMembership'
+        '200':
+          description: Proposition idempotente si l'étudiant est déjà membre.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CourseMembership'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: L'opération est réservée à un étudiant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Aucun cours visible ne correspond au code fourni.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Le corps de la requête est invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/courses/{courseId}:
+    get:
+      summary: Lire un cours accessible
+      description: >-
+        Accessible à l'enseignant propriétaire ou à un étudiant membre. Pour ne
+        pas révéler l'existence d'un cours inaccessible, le serveur répond 404.
+      operationId: getCourse
+      tags:
+        - Courses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          description: Identifiant MongoDB du cours.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails du cours; joinCode est présent uniquement pour son enseignant propriétaire.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetailResponse'
+        '401':
+          description: Access token absent ou invalide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Cours inexistant ou inaccessible à l'utilisateur.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: courseId n'a pas un format valide.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Une erreur inattendue est survenue.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateCourseRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Nom du cours, limité à 100 caractères.
+        description:
+          type: string
+          maxLength: 500
+          description: Description du cours, limitée à 500 caractères.
+    JoinCourseRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - joinCode
+      properties:
+        joinCode:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Code de jonction généré par le serveur; longueur maximale 32 caractères.
+    CourseBase:
+      type: object
+      required:
+        - id
+        - name
+        - teacherId
+        - createdAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        teacherId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    TeacherCourse:
+      allOf:
+        - $ref: '#/components/schemas/CourseBase'
+        - type: object
+          required:
+            - joinCode
+          properties:
+            joinCode:
+              type: string
+              description: Code de jonction visible seulement par l'enseignant propriétaire.
+    StudentCourse:
+      allOf:
+        - $ref: '#/components/schemas/CourseBase'
+        - not:
+            required:
+              - joinCode
+    CourseListResponse:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/TeacherCourse'
+              - $ref: '#/components/schemas/StudentCourse'
+        meta:
+          type: object
+          required:
+            - page
+            - limit
+            - total
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+              maximum: 50
+            total:
+              type: integer
+              minimum: 0
+    CourseDetailResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/TeacherCourse'
+            - $ref: '#/components/schemas/StudentCourse'
+    CourseMembership:
+      type: object
+      required:
+        - courseId
+        - studentId
+        - joinedAt
+      properties:
+        courseId:
+          type: string
+        studentId:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+    PublicUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - student
+            - teacher
+        createdAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - details
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                required:
+                  - field
+                  - message
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
