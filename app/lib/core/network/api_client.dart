@@ -10,6 +10,10 @@ const apiBaseUrl = String.fromEnvironment(
   defaultValue: 'http://10.0.2.2:3000', // émulateur Android -> localhost
 );
 
+/// Préfixe de version commun à toutes les routes du contrat (/api/v1/...).
+/// Les datasources utilisent donc des chemins relatifs : '/courses', '/courses/join'.
+const apiPrefix = '/api/v1';
+
 BaseOptions _baseOptions(String baseUrl) => BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
@@ -21,7 +25,7 @@ BaseOptions _baseOptions(String baseUrl) => BaseOptions(
 Dio createApiClient({
   required TokenStorage storage,
   required SessionExpiredCallback onSessionExpired,
-  String baseUrl = apiBaseUrl,
+  String baseUrl = '$apiBaseUrl$apiPrefix',
 }) {
   final dio = Dio(_baseOptions(baseUrl));
   final refreshDio = Dio(_baseOptions(baseUrl));
