@@ -1,11 +1,41 @@
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 
-/// Enregistrement DI de la feature `auth` (propriétaire : Membre 1).
-///
-/// Ordre conseillé : datasource -> repository (type du contrat domain) ->
-/// usecases -> BLoC/Cubit en `registerFactory` (un état neuf par écran).
-/// Dio, TokenStorage et SessionCubit sont déjà disponibles via `sl`.
+import '../../core/session/session_cubit.dart';
+import '../../core/storage/token_storage.dart';
+import 'data/datasources/auth_remote_datasource.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'domain/repositories/auth_repository.dart';
+import 'domain/usecases/login_usecase.dart';
+import 'domain/usecases/logout_usecase.dart';
+import 'domain/usecases/register_usecase.dart';
+import 'presentation/cubit/auth_cubit.dart';
+
 void registerAuthModule(GetIt sl) {
-  // TODO(Membre 1): sl.registerLazySingleton<...Repository>(() => ...RepositoryImpl(sl()));
-  // TODO(Membre 1): sl.registerFactory(() => ...Bloc(sl()));
+  sl.registerLazySingleton<AuthRemoteDataSource>(
+    () => AuthRemoteDataSource(sl<Dio>()),
+  );
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(
+      sl<AuthRemoteDataSource>(),
+      sl<TokenStorage>(),
+    ),
+  );
+  sl.registerLazySingleton<LoginUseCase>(
+    () => LoginUseCase(sl<AuthRepository>()),
+  );
+  sl.registerLazySingleton<RegisterUseCase>(
+    () => RegisterUseCase(sl<AuthRepository>()),
+  );
+  sl.registerLazySingleton<LogoutUseCase>(
+    () => LogoutUseCase(sl<AuthRepository>()),
+  );
+  sl.registerFactory<AuthCubit>(
+    () => AuthCubit(
+      loginUseCase: sl<LoginUseCase>(),
+      registerUseCase: sl<RegisterUseCase>(),
+      logoutUseCase: sl<LogoutUseCase>(),
+      sessionCubit: sl<SessionCubit>(),
+    ),
+  );
 }

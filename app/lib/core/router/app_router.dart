@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/quizzes/presentation/quizzes_routes.dart';
 import '../session/session_cubit.dart';
 import 'placeholder_pages.dart';
@@ -18,11 +20,13 @@ String? redirectFor(SessionState session, String location) {
     case SessionUnknown():
       return location == AppRoutes.splash ? null : AppRoutes.splash;
     case SessionUnauthenticated():
-      // Seules les pages publiques sont accessibles sans session.
-      return location == AppRoutes.login ? null : AppRoutes.login;
+      final publicPage =
+          location == AppRoutes.login || location == AppRoutes.register;
+      return publicPage ? null : AppRoutes.login;
     case SessionAuthenticated():
-      final onPublicPage =
-          location == AppRoutes.login || location == AppRoutes.splash;
+      final onPublicPage = location == AppRoutes.login ||
+          location == AppRoutes.register ||
+          location == AppRoutes.splash;
       return onPublicPage ? AppRoutes.home : null;
   }
 }
@@ -40,7 +44,11 @@ GoRouter createRouter(SessionCubit session) {
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (_, __) => const LoginPlaceholderPage(),
+        builder: (_, __) => const LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (_, __) => const RegisterPage(),
       ),
       GoRoute(
         path: AppRoutes.home,

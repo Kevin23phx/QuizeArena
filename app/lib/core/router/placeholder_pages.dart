@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/cubit/auth_cubit.dart';
+import '../di/injection.dart';
 import '../session/session_cubit.dart';
 import '../storage/token_storage.dart';
 
@@ -49,32 +51,38 @@ class HomePlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<SessionCubit>().state;
-    final label = state is SessionAuthenticated ? state.role.name : '?';
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Accueil ($label)'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<SessionCubit>().signedOut(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Route protégée OK'),
-            const SizedBox(height: 16),
-            // Raccourci de démonstration vers la feature quizzes (à retirer
-            // quand l'accueil par rôle et la feature courses seront intégrés).
-            FilledButton(
-              onPressed: () => context.push('/courses/demo-course/quizzes'),
-              child: const Text('Quiz du cours démo'),
+    return BlocProvider(
+      create: (_) => sl<AuthCubit>(),
+      child: Builder(
+        builder: (context) {
+          final state = context.watch<SessionCubit>().state;
+          final label = state is SessionAuthenticated ? state.role.name : '?';
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('Accueil ($label)'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () => context.read<AuthCubit>().logout(),
+                ),
+              ],
             ),
-          ],
-        ),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Route protégée OK'),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () =>
+                        context.push('/courses/demo-course/quizzes'),
+                    child: const Text('Quiz du cours démo'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

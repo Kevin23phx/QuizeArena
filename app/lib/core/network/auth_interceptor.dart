@@ -91,7 +91,11 @@ class AuthInterceptor extends QueuedInterceptor {
         '/auth/refresh',
         data: {'refreshToken': refreshToken},
       );
-      final data = res.data!;
+      final envelope = res.data!;
+      final data = envelope['data'];
+      if (data is! Map<String, dynamic>) {
+        throw StateError('Réponse de renouvellement invalide.');
+      }
       await _storage.saveTokens(
         accessToken: data['accessToken'] as String,
         refreshToken: data['refreshToken'] as String,

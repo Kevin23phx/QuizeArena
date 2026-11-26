@@ -22,11 +22,16 @@ void main() {
         redirectFor(const SessionUnauthenticated(), AppRoutes.login),
         isNull,
       );
+      expect(
+        redirectFor(const SessionUnauthenticated(), AppRoutes.register),
+        isNull,
+      );
     });
 
     test('connecté : pages publiques -> home, routes protégées autorisées', () {
       const session = SessionAuthenticated(UserRole.student);
       expect(redirectFor(session, AppRoutes.login), AppRoutes.home);
+      expect(redirectFor(session, AppRoutes.register), AppRoutes.home);
       expect(redirectFor(session, AppRoutes.splash), AppRoutes.home);
       expect(redirectFor(session, AppRoutes.home), isNull);
     });

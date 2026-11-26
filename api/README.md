@@ -37,4 +37,13 @@ Copier `.env.test.example` sous `.env.test`, vérifier que MongoDB local est act
 
 Les contrats des routes se trouvent dans `../docs/openapi.yaml`.
 
+## Flux d'authentification
+
+1. `POST /api/v1/auth/register` crée un compte étudiant avec `name`, `email` et `password`.
+2. `POST /api/v1/auth/login` renvoie `accessToken`, `refreshToken`, le rôle et les informations publiques de l'utilisateur.
+3. `POST /api/v1/auth/refresh` accepte le refresh token actuel et le remplace par une nouvelle paire.
+4. `POST /api/v1/auth/logout` révoque la session associée au refresh token.
+
+Le refresh token ne doit jamais être placé dans un header d'authorization. Il est réservé au corps de `/auth/refresh`; l'access token est envoyé via `Authorization: Bearer <token>`.
+
 Ne jamais committer `.env`. Ajouter les prochaines variables à `.env.example` avec des valeurs d’exemple non secrètes.
