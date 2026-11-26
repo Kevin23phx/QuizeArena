@@ -91,16 +91,20 @@ class QuizEditorCubit extends Cubit<QuizEditorState> {
         final questionsResult = await _repository.listQuestions(quizId);
         switch (questionsResult) {
           case Err(:final failure):
-            emit(state.copyWith(
-              status: EditorStatus.loadFailed,
-              failure: failure,
-            ));
+            emit(
+              state.copyWith(
+                status: EditorStatus.loadFailed,
+                failure: failure,
+              ),
+            );
           case Ok(value: final questions):
-            emit(state.copyWith(
-              status: EditorStatus.ready,
-              quiz: quiz,
-              questions: questions,
-            ));
+            emit(
+              state.copyWith(
+                status: EditorStatus.ready,
+                quiz: quiz,
+                questions: questions,
+              ),
+            );
         }
     }
   }
@@ -110,17 +114,21 @@ class QuizEditorCubit extends Cubit<QuizEditorState> {
     final existing = state.quiz;
     final courseId = existing?.courseId ?? _args.courseId;
     if (courseId == null) {
-      emit(state.copyWith(
-        failure: const UnknownFailure('Cours introuvable pour ce quiz.'),
-      ));
+      emit(
+        state.copyWith(
+          failure: const UnknownFailure('Cours introuvable pour ce quiz.'),
+        ),
+      );
       return false;
     }
 
-    emit(state.copyWith(
-      saving: true,
-      fieldErrors: const {},
-      clearFailure: true,
-    ));
+    emit(
+      state.copyWith(
+        saving: true,
+        fieldErrors: const {},
+        clearFailure: true,
+      ),
+    );
 
     final result = existing == null
         ? await _repository.createQuiz(courseId: courseId, draft: draft)
@@ -161,10 +169,12 @@ class QuizEditorCubit extends Cubit<QuizEditorState> {
         await _repository.createQuestion(quizId: quiz.id, draft: draft);
     switch (result) {
       case Ok(:final value):
-        emit(state.copyWith(
-          saving: false,
-          questions: [...state.questions, value],
-        ));
+        emit(
+          state.copyWith(
+            saving: false,
+            questions: [...state.questions, value],
+          ),
+        );
         return true;
       case Err(:final failure):
         _emitFailure(failure);
@@ -177,12 +187,14 @@ class QuizEditorCubit extends Cubit<QuizEditorState> {
     final result = await _repository.updateQuestion(questionId, draft);
     switch (result) {
       case Ok(:final value):
-        emit(state.copyWith(
-          saving: false,
-          questions: [
-            for (final q in state.questions) q.id == questionId ? value : q,
-          ],
-        ));
+        emit(
+          state.copyWith(
+            saving: false,
+            questions: [
+              for (final q in state.questions) q.id == questionId ? value : q,
+            ],
+          ),
+        );
         return true;
       case Err(:final failure):
         _emitFailure(failure);
@@ -195,13 +207,15 @@ class QuizEditorCubit extends Cubit<QuizEditorState> {
     final result = await _repository.deleteQuestion(questionId);
     switch (result) {
       case Ok():
-        emit(state.copyWith(
-          saving: false,
-          questions: [
-            for (final q in state.questions)
-              if (q.id != questionId) q,
-          ],
-        ));
+        emit(
+          state.copyWith(
+            saving: false,
+            questions: [
+              for (final q in state.questions)
+                if (q.id != questionId) q,
+            ],
+          ),
+        );
         return true;
       case Err(:final failure):
         _emitFailure(failure);

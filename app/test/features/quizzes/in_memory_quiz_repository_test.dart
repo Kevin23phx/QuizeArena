@@ -37,11 +37,13 @@ void main() {
     });
 
     test('le brouillon envoyé au serveur contient toujours les deux dates', () {
-      final json = quizDraftToJson(const QuizDraft(
-        title: 'Quiz 1',
-        durationMinutes: 20,
-        status: QuizStatus.draft,
-      ));
+      final json = quizDraftToJson(
+        const QuizDraft(
+          title: 'Quiz 1',
+          durationMinutes: 20,
+          status: QuizStatus.draft,
+        ),
+      );
 
       expect(json.containsKey('opensAt'), isTrue);
       expect(json['opensAt'], isNull);
@@ -84,8 +86,10 @@ void main() {
       expect(result, isA<Err<dynamic>>());
       final failure = (result as Err).failure;
       expect(failure, isA<ValidationFailure>());
-      expect((failure as ValidationFailure).fieldErrors.containsKey('title'),
-          isTrue);
+      expect(
+        (failure as ValidationFailure).fieldErrors.containsKey('title'),
+        isTrue,
+      );
     });
   });
 }

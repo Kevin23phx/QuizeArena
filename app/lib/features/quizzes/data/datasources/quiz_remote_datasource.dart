@@ -35,19 +35,23 @@ class QuizRemoteDataSource {
     String courseId,
     Map<String, dynamic> body,
   ) async =>
-      _data(await _dio.post<Map<String, dynamic>>(
-        '/courses/$courseId/quizzes',
-        data: body,
-      ));
+      _data(
+        await _dio.post<Map<String, dynamic>>(
+          '/courses/$courseId/quizzes',
+          data: body,
+        ),
+      );
 
   Future<Map<String, dynamic>> update(
     String quizId,
     Map<String, dynamic> body,
   ) async =>
-      _data(await _dio.patch<Map<String, dynamic>>(
-        '/quizzes/$quizId',
-        data: body,
-      ));
+      _data(
+        await _dio.patch<Map<String, dynamic>>(
+          '/quizzes/$quizId',
+          data: body,
+        ),
+      );
 
   Future<void> delete(String quizId) async {
     await _dio.delete<void>('/quizzes/$quizId');
@@ -67,19 +71,23 @@ class QuizRemoteDataSource {
     String quizId,
     Map<String, dynamic> body,
   ) async =>
-      _data(await _dio.post<Map<String, dynamic>>(
-        '/quizzes/$quizId/questions',
-        data: body,
-      ));
+      _data(
+        await _dio.post<Map<String, dynamic>>(
+          '/quizzes/$quizId/questions',
+          data: body,
+        ),
+      );
 
   Future<Map<String, dynamic>> updateQuestion(
     String questionId,
     Map<String, dynamic> body,
   ) async =>
-      _data(await _dio.patch<Map<String, dynamic>>(
-        '/questions/$questionId',
-        data: body,
-      ));
+      _data(
+        await _dio.patch<Map<String, dynamic>>(
+          '/questions/$questionId',
+          data: body,
+        ),
+      );
 
   Future<void> deleteQuestion(String questionId) async {
     await _dio.delete<void>('/questions/$questionId');

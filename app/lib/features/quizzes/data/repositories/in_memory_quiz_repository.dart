@@ -45,7 +45,7 @@ class InMemoryQuizRepository implements QuizRepository {
           choices: const [
             'L\'état et ses transitions',
             'Le style des widgets',
-            'Le routage'
+            'Le routage',
           ],
           correctIndex: 0,
           points: 2,
@@ -85,7 +85,8 @@ class InMemoryQuizRepository implements QuizRepository {
     final quiz = _find(quizId);
     if (quiz == null) return;
     _replace(
-        quiz.copyWith(questionCount: _questionsByQuiz[quizId]?.length ?? 0));
+      quiz.copyWith(questionCount: _questionsByQuiz[quizId]?.length ?? 0),
+    );
   }
 
   Quiz _fromDraft(String id, String courseId, QuizDraft draft, int count) {
@@ -125,12 +126,14 @@ class InMemoryQuizRepository implements QuizRepository {
     ];
     final start = ((page - 1) * limit).clamp(0, all.length);
     final end = (start + limit).clamp(0, all.length);
-    return Ok(Paginated<Quiz>(
-      items: all.sublist(start, end),
-      page: page,
-      limit: limit,
-      total: all.length,
-    ));
+    return Ok(
+      Paginated<Quiz>(
+        items: all.sublist(start, end),
+        page: page,
+        limit: limit,
+        total: all.length,
+      ),
+    );
   }
 
   @override
@@ -159,15 +162,18 @@ class InMemoryQuizRepository implements QuizRepository {
   Future<Result<Quiz>> updateQuiz(String quizId, QuizDraft draft) async {
     await _latency();
     final existing = _find(quizId);
-    if (existing == null)
+    if (existing == null) {
       return const Err(NotFoundFailure('Quiz introuvable.'));
+    }
     final invalid = _validateQuiz(draft);
     if (invalid != null) return Err(invalid);
     final count = _questionsByQuiz[quizId]?.length ?? 0;
     if (draft.status == QuizStatus.published && count == 0) {
-      return const Err(ValidationFailure(
-        message: 'Ajoutez au moins une question avant de publier.',
-      ));
+      return const Err(
+        ValidationFailure(
+          message: 'Ajoutez au moins une question avant de publier.',
+        ),
+      );
     }
     final updated = _fromDraft(quizId, existing.courseId, draft, count);
     _replace(updated);

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Carte blanche arrondie du design. Cliquable si `onTap` est fourni.
 class AppCard extends StatelessWidget {

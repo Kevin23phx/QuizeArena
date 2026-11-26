@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Couleurs du design QuizArena (turquoise, jaune d'accent).
 abstract final class AppColors {

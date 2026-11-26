@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:quizarena/core/theme/app_theme.dart';
 import 'package:quizarena/core/widgets/app_input.dart';

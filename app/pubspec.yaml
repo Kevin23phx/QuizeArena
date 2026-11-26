@@ -18,6 +18,7 @@ dependencies:
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.0
 
+  material_ui: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

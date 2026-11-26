@@ -33,7 +33,7 @@ class AuthInterceptor extends QueuedInterceptor {
   static const _publicPaths = [
     '/auth/login',
     '/auth/register',
-    '/auth/refresh'
+    '/auth/refresh',
   ];
   static const _retriedKey = 'auth_retried';
 

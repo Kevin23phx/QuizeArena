@@ -66,12 +66,12 @@ void main() {
     build: buildBloc,
     act: (bloc) => bloc.add(const QuizzesStarted()),
     expect: () => [
-  const QuizzesState(status: ViewStatus.loading),
-  const QuizzesState(
-    status: ViewStatus.content,
-    quizzes: [quiz1, quiz2],
-  ),
-],
+      const QuizzesState(status: ViewStatus.loading),
+      const QuizzesState(
+        status: ViewStatus.content,
+        quizzes: [quiz1, quiz2],
+      ),
+    ],
   );
 
   blocTest<QuizzesBloc, QuizzesState>(
@@ -80,9 +80,9 @@ void main() {
     build: buildBloc,
     act: (bloc) => bloc.add(const QuizzesStarted()),
     expect: () => [
-  const QuizzesState(status: ViewStatus.loading),
-  const QuizzesState(status: ViewStatus.empty),
-],
+      const QuizzesState(status: ViewStatus.loading),
+      const QuizzesState(status: ViewStatus.empty),
+    ],
   );
 
   blocTest<QuizzesBloc, QuizzesState>(
@@ -91,12 +91,12 @@ void main() {
     build: buildBloc,
     act: (bloc) => bloc.add(const QuizzesStarted()),
     expect: () => [
-  const QuizzesState(status: ViewStatus.loading),
-  const QuizzesState(
-    status: ViewStatus.error,
-    failure: NetworkFailure(),
-  ),
-],
+      const QuizzesState(status: ViewStatus.loading),
+      const QuizzesState(
+        status: ViewStatus.error,
+        failure: NetworkFailure(),
+      ),
+    ],
   );
 
   blocTest<QuizzesBloc, QuizzesState>(

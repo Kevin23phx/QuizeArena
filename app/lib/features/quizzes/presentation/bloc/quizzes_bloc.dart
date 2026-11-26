@@ -128,11 +128,13 @@ class QuizzesBloc extends Bloc<QuizzesEvent, QuizzesState> {
     Emitter<QuizzesState> emit, {
     required String query,
   }) async {
-    emit(state.copyWith(
-      status: ViewStatus.loading,
-      query: query,
-      clearFailure: true,
-    ));
+    emit(
+      state.copyWith(
+        status: ViewStatus.loading,
+        query: query,
+        clearFailure: true,
+      ),
+    );
 
     final result = await _repository.listQuizzes(
       courseId: courseId,
@@ -143,13 +145,15 @@ class QuizzesBloc extends Bloc<QuizzesEvent, QuizzesState> {
 
     switch (result) {
       case Ok(:final value):
-        emit(state.copyWith(
-          status: value.items.isEmpty ? ViewStatus.empty : ViewStatus.content,
-          quizzes: value.items,
-          page: value.page,
-          hasMore: value.hasMore,
-          loadingMore: false,
-        ));
+        emit(
+          state.copyWith(
+            status: value.items.isEmpty ? ViewStatus.empty : ViewStatus.content,
+            quizzes: value.items,
+            page: value.page,
+            hasMore: value.hasMore,
+            loadingMore: false,
+          ),
+        );
       case Err(:final failure):
         emit(state.copyWith(status: ViewStatus.error, failure: failure));
     }
@@ -175,12 +179,14 @@ class QuizzesBloc extends Bloc<QuizzesEvent, QuizzesState> {
 
     switch (result) {
       case Ok(:final value):
-        emit(state.copyWith(
-          quizzes: [...state.quizzes, ...value.items],
-          page: value.page,
-          hasMore: value.hasMore,
-          loadingMore: false,
-        ));
+        emit(
+          state.copyWith(
+            quizzes: [...state.quizzes, ...value.items],
+            page: value.page,
+            hasMore: value.hasMore,
+            loadingMore: false,
+          ),
+        );
       case Err():
         emit(state.copyWith(loadingMore: false));
     }
