@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/attempts/attempts_module.dart';
@@ -11,8 +10,10 @@ import '../network/api_client.dart';
 import '../router/app_router.dart';
 import '../session/session_cubit.dart';
 import '../storage/token_storage.dart';
+import 'service_locator.dart';
 
-final GetIt sl = GetIt.instance;
+// `sl` est défini dans service_locator.dart ; réexporté pour main.dart et les tests.
+export 'service_locator.dart';
 
 /// COMPOSITION ROOT UNIQUE de l'application.
 ///
@@ -26,9 +27,13 @@ Future<void> configureDependencies({
   Dio? dio,
 }) async {
   // --- core ---
-  sl.registerLazySingleton<TokenStorage>(() => tokenStorage ?? SecureTokenStorage());
+  sl.registerLazySingleton<TokenStorage>(
+    () => tokenStorage ?? SecureTokenStorage(),
+  );
 
-  sl.registerLazySingleton<SessionCubit>(() => SessionCubit(sl<TokenStorage>()));
+  sl.registerLazySingleton<SessionCubit>(
+    () => SessionCubit(sl<TokenStorage>()),
+  );
 
   sl.registerLazySingleton<Dio>(
     () =>

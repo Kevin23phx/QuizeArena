@@ -30,7 +30,11 @@ class AuthInterceptor extends QueuedInterceptor {
   final TokenStorage _storage;
   final SessionExpiredCallback _onSessionExpired;
 
-  static const _publicPaths = ['/auth/login', '/auth/register', '/auth/refresh'];
+  static const _publicPaths = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/refresh',
+  ];
   static const _retriedKey = 'auth_retried';
 
   Future<bool>? _refreshing;
@@ -87,7 +91,11 @@ class AuthInterceptor extends QueuedInterceptor {
         '/auth/refresh',
         data: {'refreshToken': refreshToken},
       );
-      final data = res.data!;
+      final envelope = res.data!;
+      final data = envelope['data'];
+      if (data is! Map<String, dynamic>) {
+        throw StateError('Réponse de renouvellement invalide.');
+      }
       await _storage.saveTokens(
         accessToken: data['accessToken'] as String,
         refreshToken: data['refreshToken'] as String,

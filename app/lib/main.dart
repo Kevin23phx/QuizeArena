@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/di/injection.dart';
 import 'core/session/session_cubit.dart';
+import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,7 @@ class QuizArenaApp extends StatelessWidget {
       value: sl<SessionCubit>(),
       child: MaterialApp.router(
         title: 'QuizArena',
-        theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
+        theme: buildAppTheme(),
         routerConfig: sl<GoRouter>(),
       ),
     );
