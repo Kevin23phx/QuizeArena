@@ -20,16 +20,18 @@ DioException _badResponse(int status, Object? body) {
 void main() {
   group('mapDioException (ErrorResponse du contrat)', () {
     test('422 : details [{field, message}] -> erreurs par champ', () {
-      final failure = mapDioException(_badResponse(422, {
-        'error': {
-          'code': 'VALIDATION_ERROR',
-          'message': 'Requête invalide',
-          'details': [
-            {'field': 'name', 'message': 'Le nom est requis'},
-            {'field': 'description', 'message': 'Trop long'},
-          ],
-        },
-      }));
+      final failure = mapDioException(
+        _badResponse(422, {
+          'error': {
+            'code': 'VALIDATION_ERROR',
+            'message': 'Requête invalide',
+            'details': [
+              {'field': 'name', 'message': 'Le nom est requis'},
+              {'field': 'description', 'message': 'Trop long'},
+            ],
+          },
+        }),
+      );
 
       expect(failure, isA<ValidationFailure>());
       final v = failure as ValidationFailure;
@@ -41,23 +43,41 @@ void main() {
     });
 
     test('403 -> ForbiddenFailure avec le message serveur', () {
-      final failure = mapDioException(_badResponse(403, {
-        'error': {'code': 'FORBIDDEN', 'message': 'Réservé aux enseignants', 'details': []},
-      }));
+      final failure = mapDioException(
+        _badResponse(403, {
+          'error': {
+            'code': 'FORBIDDEN',
+            'message': 'Réservé aux enseignants',
+            'details': [],
+          },
+        }),
+      );
       expect(failure, const ForbiddenFailure('Réservé aux enseignants'));
     });
 
     test('404 (code invalide) et 401', () {
       expect(
-        mapDioException(_badResponse(404, {
-          'error': {'code': 'NOT_FOUND', 'message': 'Cours introuvable', 'details': []},
-        })),
+        mapDioException(
+          _badResponse(404, {
+            'error': {
+              'code': 'NOT_FOUND',
+              'message': 'Cours introuvable',
+              'details': [],
+            },
+          }),
+        ),
         isA<NotFoundFailure>(),
       );
       expect(
-        mapDioException(_badResponse(401, {
-          'error': {'code': 'UNAUTHORIZED', 'message': 'Jeton invalide', 'details': []},
-        })),
+        mapDioException(
+          _badResponse(401, {
+            'error': {
+              'code': 'UNAUTHORIZED',
+              'message': 'Jeton invalide',
+              'details': [],
+            },
+          }),
+        ),
         isA<UnauthorizedFailure>(),
       );
     });
@@ -81,7 +101,10 @@ void main() {
     };
 
     test('lit data et meta', () {
-      final page = Paginated<String>.fromEnvelope(json, (j) => j['id'] as String);
+      final page = Paginated<String>.fromEnvelope(
+        json,
+        (j) => j['id'] as String,
+      );
       expect(page.items, ['a', 'b']);
       expect(page.total, 5);
       expect(page.hasMore, isTrue);

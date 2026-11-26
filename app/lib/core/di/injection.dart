@@ -26,9 +26,13 @@ Future<void> configureDependencies({
   Dio? dio,
 }) async {
   // --- core ---
-  sl.registerLazySingleton<TokenStorage>(() => tokenStorage ?? SecureTokenStorage());
+  sl.registerLazySingleton<TokenStorage>(
+    () => tokenStorage ?? SecureTokenStorage(),
+  );
 
-  sl.registerLazySingleton<SessionCubit>(() => SessionCubit(sl<TokenStorage>()));
+  sl.registerLazySingleton<SessionCubit>(
+    () => SessionCubit(sl<TokenStorage>()),
+  );
 
   sl.registerLazySingleton<Dio>(
     () =>

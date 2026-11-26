@@ -4,11 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../session/session_cubit.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/register_page.dart';
 import 'placeholder_pages.dart';
 
 abstract final class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
+  static const register = '/register';
   static const home = '/home';
 }
 
@@ -19,11 +22,13 @@ String? redirectFor(SessionState session, String location) {
     case SessionUnknown():
       return location == AppRoutes.splash ? null : AppRoutes.splash;
     case SessionUnauthenticated():
-      // Seules les pages publiques sont accessibles sans session.
-      return location == AppRoutes.login ? null : AppRoutes.login;
+      final publicPage =
+          location == AppRoutes.login || location == AppRoutes.register;
+      return publicPage ? null : AppRoutes.login;
     case SessionAuthenticated():
-      final onPublicPage =
-          location == AppRoutes.login || location == AppRoutes.splash;
+      final onPublicPage = location == AppRoutes.login ||
+          location == AppRoutes.register ||
+          location == AppRoutes.splash;
       return onPublicPage ? AppRoutes.home : null;
   }
 }
@@ -32,15 +37,14 @@ GoRouter createRouter(SessionCubit session) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: _CubitListenable(session),
-    redirect: (context, state) => redirectFor(session.state, state.matchedLocation),
+    redirect: (context, state) =>
+        redirectFor(session.state, state.matchedLocation),
     routes: [
+      GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashPage()),
+      GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginPage()),
       GoRoute(
-        path: AppRoutes.splash,
-        builder: (_, __) => const SplashPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (_, __) => const LoginPlaceholderPage(),
+        path: AppRoutes.register,
+        builder: (_, __) => const RegisterPage(),
       ),
       GoRoute(
         path: AppRoutes.home,
