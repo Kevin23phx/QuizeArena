@@ -246,7 +246,7 @@ Préparer aussi un plan de secours reproductible avec données seedées et vidé
 6. Mécanisme live retenu (WebSocket/SSE), événements et stratégie de reconnexion.
 7. Fournisseur de déploiement, URL, jeu de données de démonstration et coût/limites.
 8. Attribution des noms/IDs aux quatre responsabilités et calendrier des revues.
-
+ 
 ## Référence
 
 Consignes extraites de `project_book.pdf` : section 3 (exigences techniques), fiche T17 (QuizArena), sections 5–8 (livrables, défense, notation, intégrité), et checklists de l’annexe A. Le projet doit rester compris et défendable par chacun; toute assistance ou code externe utilisé doit être compris, vérifié et déclaré dans le rapport selon les consignes du cours.
