@@ -11,9 +11,9 @@ typedef SessionExpiredCallback = Future<void> Function();
 /// si plusieurs requêtes échouent en même temps, UN SEUL refresh est lancé,
 /// les autres attendent son résultat (single-flight) puis sont rejouées.
 ///
-/// Contrat API :
-///   POST /auth/refresh { "refreshToken": "..." }
-///   -> 200 { "data": { "accessToken": "...", "refreshToken": "...", ... } }
+/// Hypothèse de contrat (à valider avec le Membre 1 / l'API) :
+///   POST /auth/refresh  { "refreshToken": "..." }
+///   -> 200 { "accessToken": "...", "refreshToken": "..." }  (refresh rotatif)
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor({
     required Dio dio,

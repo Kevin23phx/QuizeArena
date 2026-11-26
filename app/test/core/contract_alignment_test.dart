@@ -101,10 +101,8 @@ void main() {
     };
 
     test('lit data et meta', () {
-      final page = Paginated<String>.fromEnvelope(
-        json,
-        (j) => j['id'] as String,
-      );
+      final page =
+          Paginated<String>.fromEnvelope(json, (j) => j['id'] as String);
       expect(page.items, ['a', 'b']);
       expect(page.total, 5);
       expect(page.hasMore, isTrue);

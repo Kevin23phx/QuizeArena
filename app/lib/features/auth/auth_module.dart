@@ -1,5 +1,5 @@
-import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../core/session/session_cubit.dart';
 import '../../core/storage/token_storage.dart';
@@ -16,7 +16,10 @@ void registerAuthModule(GetIt sl) {
     () => AuthRemoteDataSource(sl<Dio>()),
   );
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl<AuthRemoteDataSource>(), sl<TokenStorage>()),
+    () => AuthRepositoryImpl(
+      sl<AuthRemoteDataSource>(),
+      sl<TokenStorage>(),
+    ),
   );
   sl.registerLazySingleton<LoginUseCase>(
     () => LoginUseCase(sl<AuthRepository>()),

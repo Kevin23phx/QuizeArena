@@ -3,17 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
-import '../session/session_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/quizzes/presentation/quizzes_routes.dart';
+import '../session/session_cubit.dart';
 import 'placeholder_pages.dart';
+import 'routes.dart';
 
-abstract final class AppRoutes {
-  static const splash = '/splash';
-  static const login = '/login';
-  static const register = '/register';
-  static const home = '/home';
-}
+// AppRoutes vit dans routes.dart (évite un cycle d'imports avec les features).
+export 'routes.dart';
 
 /// Garde d'authentification : fonction PURE, donc testable sans widget.
 /// Retourne la route vers laquelle rediriger, ou null pour laisser passer.
@@ -40,8 +38,14 @@ GoRouter createRouter(SessionCubit session) {
     redirect: (context, state) =>
         redirectFor(session.state, state.matchedLocation),
     routes: [
-      GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashPage()),
-      GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginPage()),
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (_, __) => const SplashPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (_, __) => const LoginPage(),
+      ),
       GoRoute(
         path: AppRoutes.register,
         builder: (_, __) => const RegisterPage(),
@@ -50,8 +54,8 @@ GoRouter createRouter(SessionCubit session) {
         path: AppRoutes.home,
         builder: (_, __) => const HomePlaceholderPage(),
       ),
-      // Chaque membre ajoute ici les routes de SA feature (une ligne par route)
-      // ex. /courses, /courses/:id, /quizzes/:id ...
+      // Chaque membre ajoute ici les routes de SA feature (une ligne par feature)
+      ...quizzesRoutes,
     ],
   );
 }

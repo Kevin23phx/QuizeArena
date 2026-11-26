@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:quizarena/core/error/failure.dart';
 import 'package:quizarena/core/widgets/state_view.dart';
