@@ -14,12 +14,14 @@ sealed class Failure extends Equatable {
 
 /// Pas de connexion, timeout, DNS...
 final class NetworkFailure extends Failure {
-  const NetworkFailure([super.message = 'Connexion impossible. Vérifiez votre réseau.']);
+  const NetworkFailure(
+      [super.message = 'Connexion impossible. Vérifiez votre réseau.']);
 }
 
 /// 401 : session expirée ou jeton invalide (après échec du refresh).
 final class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure([super.message = 'Session expirée. Reconnectez-vous.']);
+  const UnauthorizedFailure(
+      [super.message = 'Session expirée. Reconnectez-vous.']);
 }
 
 /// 403 : rôle ou propriété de la ressource insuffisants.

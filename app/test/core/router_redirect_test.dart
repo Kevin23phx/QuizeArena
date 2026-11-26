@@ -6,7 +6,8 @@ import 'package:quizarena/core/storage/token_storage.dart';
 void main() {
   group('redirectFor (garde d\'authentification)', () {
     test('session inconnue -> splash', () {
-      expect(redirectFor(const SessionUnknown(), AppRoutes.home), AppRoutes.splash);
+      expect(redirectFor(const SessionUnknown(), AppRoutes.home),
+          AppRoutes.splash);
       expect(redirectFor(const SessionUnknown(), AppRoutes.splash), isNull);
     });
 
@@ -15,7 +16,8 @@ void main() {
         redirectFor(const SessionUnauthenticated(), AppRoutes.home),
         AppRoutes.login,
       );
-      expect(redirectFor(const SessionUnauthenticated(), AppRoutes.login), isNull);
+      expect(
+          redirectFor(const SessionUnauthenticated(), AppRoutes.login), isNull);
     });
 
     test('connecté : pages publiques -> home, routes protégées autorisées', () {

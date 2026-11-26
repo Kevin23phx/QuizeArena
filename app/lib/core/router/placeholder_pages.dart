@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../session/session_cubit.dart';
 import '../storage/token_storage.dart';
@@ -60,7 +61,21 @@ class HomePlaceholderPage extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(child: Text('Route protégée OK')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Route protégée OK'),
+            const SizedBox(height: 16),
+            // Raccourci de démonstration vers la feature quizzes (à retirer
+            // quand l'accueil par rôle et la feature courses seront intégrés).
+            FilledButton(
+              onPressed: () => context.push('/courses/demo-course/quizzes'),
+              child: const Text('Quiz du cours démo'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

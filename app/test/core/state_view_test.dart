@@ -8,7 +8,8 @@ Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 void main() {
   testWidgets('loading', (tester) async {
     await tester.pumpWidget(_wrap(
-      StateView(status: ViewStatus.loading, contentBuilder: (_) => const Text('c')),
+      StateView(
+          status: ViewStatus.loading, contentBuilder: (_) => const Text('c')),
     ));
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
@@ -41,7 +42,8 @@ void main() {
 
   testWidgets('content', (tester) async {
     await tester.pumpWidget(_wrap(
-      StateView(status: ViewStatus.content, contentBuilder: (_) => const Text('ok')),
+      StateView(
+          status: ViewStatus.content, contentBuilder: (_) => const Text('ok')),
     ));
     expect(find.text('ok'), findsOneWidget);
   });
