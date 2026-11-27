@@ -76,3 +76,15 @@ flutter analyze
 flutter test
 flutter run --dart-define=API_URL=http://10.0.2.2:3000
 ```
+
+## Release
+
+Build the Android release APK with:
+
+```bash
+flutter build apk --release --dart-define=API_URL=https://<adresse-du-serveur>
+```
+
+The APK is written to `build/app/outputs/flutter-apk/app-release.apk`.
+`API_URL` is the server base URL without `/api/v1`; `core/network/api_client.dart`
+adds that prefix to the Dio base URL.
