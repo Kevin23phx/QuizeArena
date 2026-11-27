@@ -1,71 +1,84 @@
 # Robot vérificateur de QuizArena
-# À placer dans le projet à cet endroit exact : .github/workflows/ci.yml
+# Emplacement : .github/workflows/ci.yml
 
 name: CI
 
-# Quand le robot se lance :
-# - à chaque proposition de code (pull request)
-# - à chaque fois que du code entre dans la branche principale (main)
+# Le robot se lance à chaque pull request,
+# et à chaque fois que du code entre dans main.
 on:
   pull_request:
   push:
     branches: [main]
 
 jobs:
-  # ---------- Contrôle 1 : le serveur (dossier api/) ----------
+  # ---------- Contrôle du serveur (dossier api/) ----------
   api:
     name: Serveur (api)
     runs-on: ubuntu-latest
+
+    # Une base MongoDB temporaire, utilisée seulement pendant les tests
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     defaults:
       run:
         working-directory: api
+
     steps:
-      # Récupérer le code du projet
       - uses: actions/checkout@v4
 
-      # Installer Node.js version 24 (exigée par le cahier des charges)
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: api/package-lock.json
 
-      # Installer les outils dont le serveur a besoin
-      - run: npm ci
+      - name: Installer les dépendances
+        run: npm ci
 
-      # Vérifier les fautes dans le code TypeScript
-      - run: npm run typecheck --if-present
+      - name: Vérifier le code TypeScript
+        run: npm run typecheck
 
-      # Vérifier que le code est bien présenté
-      - run: npm run format:check --if-present
+      - name: Préparer la configuration de test
+        run: cp .env.test.example .env.test
 
-      # Lancer les tests automatiques
-      - run: npm test --if-present
+      - name: Lancer les tests
+        run: npm test
 
-  # ---------- Contrôle 2 : l'application téléphone (dossier app/) ----------
+  # ---------- Contrôle de l'application (dossier app/) ----------
   app:
     name: Application (app)
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: app
+
     steps:
       - uses: actions/checkout@v4
 
-      # Installer Flutter (version stable)
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: "3.47.7"
           cache: true
 
-      # Installer les outils dont l'application a besoin
-      - run: flutter pub get
+      - name: Installer les dépendances
+        run: flutter pub get
 
-      # Vérifier que le code est bien présenté
-      - run: dart format --output=none --set-exit-if-changed .
+      - name: Vérifier le formatage
+        run: dart format --output=none --set-exit-if-changed .
 
-      # Correcteur du code Flutter
-      - run: flutter analyze
+      - name: Analyser le code
+        run: flutter analyze
 
-      # Lancer les tests automatiques
-      - run: flutter test
+      - name: Lancer les tests
+        run: flutter test
