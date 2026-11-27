@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
+import { env } from '../../config/env.js';
 import { loginController, logoutController, refreshController, registerController } from './auth.controller.js';
 
 export const authRouter = Router();
@@ -7,6 +8,7 @@ export const authRouter = Router();
 const createAuthRateLimiter = () => rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
+  skip: () => env.NODE_ENV === 'test',
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: {
