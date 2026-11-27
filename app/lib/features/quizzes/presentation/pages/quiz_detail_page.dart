@@ -1,12 +1,16 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:quizarena/core/di/service_locator.dart';
 import 'package:quizarena/core/format.dart';
 import 'package:quizarena/core/router/navigation.dart';
+import 'package:quizarena/core/session/session_cubit.dart';
+import 'package:quizarena/core/storage/token_storage.dart';
 import 'package:quizarena/core/theme/app_theme.dart';
 import 'package:quizarena/core/widgets/app_card.dart';
 import 'package:quizarena/core/widgets/app_header.dart';
 import 'package:quizarena/core/widgets/state_view.dart';
+import 'package:quizarena/features/attempts/attempt_paths.dart';
 
 import '../../domain/entities/quiz.dart';
 import '../bloc/quiz_detail_cubit.dart';
@@ -54,6 +58,9 @@ class _Content extends StatelessWidget {
     final opens = quiz.opensAt;
     final closes = quiz.closesAt;
     final open = quiz.isOpenAt(DateTime.now());
+    final session = sl<SessionCubit>().state;
+    final isStudent =
+        session is SessionAuthenticated && session.role == UserRole.student;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -100,26 +107,20 @@ class _Content extends StatelessWidget {
               ],
             ),
           ),
-          const Spacer(),
-          FilledButton(
-            // Désactivé hors fenêtre d'ouverture : simple confort d'affichage,
-            // le serveur refusera de toute façon un démarrage non autorisé.
-            onPressed: open ? () => _start(context) : null,
-            child: Text(open ? 'Démarrer le quiz' : 'Quiz non disponible'),
-          ),
+          if (isStudent) ...[
+            const Spacer(),
+            FilledButton(
+              onPressed: open ? () => _start(context, quiz.id) : null,
+              child: Text(open ? 'Commencer' : 'Quiz non disponible'),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  void _start(BuildContext context) {
-    // TODO(Membre 4): ouvrir l'écran de passation de la feature `attempts`.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La passation sera branchée avec la feature attempts.'),
-      ),
-    );
-  }
+  void _start(BuildContext context, String quizId) =>
+      context.go(AttemptPaths.play(quizId));
 }
 
 class _Row extends StatelessWidget {
