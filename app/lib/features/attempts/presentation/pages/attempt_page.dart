@@ -44,9 +44,14 @@ class AttemptPage extends StatelessWidget {
                   builder: (context, state) => StateView(
                     status: state.status,
                     failure: state.failure,
-                    onRetry: () => context
-                        .read<AttemptBloc>()
-                        .add(const AttemptReloaded()),
+                    onRetry: () {
+                      final bloc = context.read<AttemptBloc>();
+                      if (state.attempt == null) {
+                        bloc.add(AttemptStarted(quizId));
+                      } else {
+                        bloc.add(const AttemptReloaded());
+                      }
+                    },
                     contentBuilder: (_) => _AttemptContent(state: state),
                   ),
                 ),
