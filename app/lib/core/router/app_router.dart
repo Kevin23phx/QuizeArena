@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/attempts/attempts_routes.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/quizzes/presentation/quizzes_routes.dart';
@@ -56,6 +57,7 @@ GoRouter createRouter(SessionCubit session) {
       ),
       // Chaque membre ajoute ici les routes de SA feature (une ligne par feature)
       ...quizzesRoutes,
+      ...attemptsRoutes,
     ],
   );
 }
